@@ -4,14 +4,14 @@ services:
     container_name: cloud_postgres
     environment:
       POSTGRES_DB: cloud_storage
-      POSTGRES_USER: cloud_user
-      POSTGRES_PASSWORD: cloud_password
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 7994821Kk.
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cloud_user -d cloud_storage"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cloud_storage"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -24,8 +24,8 @@ services:
         condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/cloud_storage
-      SPRING_DATASOURCE_USERNAME: cloud_user
-      SPRING_DATASOURCE_PASSWORD: cloud_password
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 7994821Kk.
     ports:
       - "5555:5555"
     volumes:

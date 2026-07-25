@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/cloud")
 public class FileController {
     private final FileService fileService;
     private final AuthService authService;
