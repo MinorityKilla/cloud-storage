@@ -121,3 +121,145 @@ PUT /file?filename=... — переименование файла.
 
 ### 9. Отправка на проверку
 Код загружен в GitHub-репозиторий, готов к проверке. Все требования дипломного задания выполнены.
+
+
+
+
+# Облачное хранилище (Cloud Storage)
+
+Дипломный проект — REST-сервис для облачного хранения файлов.
+
+## Стек технологий
+
+- **Backend:** Java 17, Spring Boot 3.1.5, Spring Data JPA
+- **База данных:** PostgreSQL 17
+- **Сборщик:** Maven
+- **Контейнеризация:** Docker, Docker Compose
+- **Тестирование:** JUnit 5, Mockito, Testcontainers
+
+## Требования для запуска
+
+- Установленный Docker Desktop
+- Java 17 (только для сборки, можно не устанавливать, если собирать внутри Docker)
+- Maven (или использовать Maven wrapper `./mvnw`)
+
+## Быстрый старт (локально)
+
+```bash
+# 1. Клонировать репозиторий
+git clone https://github.com/MinorityKilla/cloud-storage.git
+cd cloud-storage
+
+# 2. Собрать jar-файл
+mvn clean package -DskipTests
+
+# 3. Запустить сервисы (PostgreSQL + приложение)
+docker-compose up -d
+
+# 4. Проверить работу
+curl -X POST http://localhost:5555/login \
+  -H "Content-Type: application/json" \
+  -d '{"login":"user","password":"password"}'
+```
+
+Приложение будет доступно на **http://localhost:5555**
+
+## Тестовый пользователь
+
+- **Логин:** `user`
+- **Пароль:** `password`
+
+## API Endpoints
+
+| Метод | URL | Описание | Заголовки |
+|-------|-----|----------|-----------|
+| POST | `/login` | Авторизация | Content-Type: application/json |
+| POST | `/logout` | Выход | auth-token: {токен} |
+| GET | `/list?limit=N` | Список файлов | auth-token: {токен} |
+| POST | `/file?filename=name` | Загрузка файла | auth-token: {токен}, multipart/form-data |
+| GET | `/file?filename=name` | Скачать файл | auth-token: {токен} |
+| DELETE | `/file?filename=name` | Удалить файл | auth-token: {токен} |
+| PUT | `/file?filename=name` | Переименовать файл | auth-token: {токен}, Content-Type: application/json |
+
+### Примеры запросов
+
+```bash
+# Получить токен
+TOKEN=$(curl -s -X POST http://localhost:5555/login \
+  -H "Content-Type: application/json" \
+  -d '{"login":"user","password":"password"}' | grep -o '"auth-token":"[^"]*"' | cut -d'"' -f4)
+
+# Загрузить файл
+echo "Hello" > test.txt
+curl -X POST "http://localhost:5555/file?filename=test.txt" \
+  -H "auth-token: $TOKEN" \
+  -F "file=@test.txt"
+
+# Список файлов
+curl -X GET "http://localhost:5555/list?limit=10" \
+  -H "auth-token: $TOKEN"
+
+# Переименовать
+curl -X PUT "http://localhost:5555/file?filename=test.txt" \
+  -H "auth-token: $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"new.txt"}'
+
+# Скачать
+curl -X GET "http://localhost:5555/file?filename=new.txt" \
+  -H "auth-token: $TOKEN" \
+  -o downloaded.txt
+
+# Удалить
+curl -X DELETE "http://localhost:5555/file?filename=new.txt" \
+  -H "auth-token: $TOKEN"
+```
+
+## Запуск тестов
+
+```bash
+# Только unit-тесты (Mockito)
+mvn test -Dtest="!CloudStorageIntegrationTest"
+
+# Интеграционные тесты (требуется Docker)
+mvn test
+```
+
+## Остановка
+
+```bash
+docker-compose down
+```
+
+## Схема приложений
+
+```mermaid
+graph LR
+    A[FRONTEND<br/>Vue.js<br/>:8080] -- "REST API / auth-token" --> B[BACKEND<br/>Spring Boot<br/>:5555]
+    B -- "JPA" --> C[(PostgreSQL 17<br/>:5432)]
+    B -- "Файлы" --> D[Файловая система<br/>/uploads/]
+```
+
+## Структура базы данных
+
+### users
+| Поле | Тип | Описание |
+|------|-----|----------|
+| id | BIGSERIAL | Первичный ключ |
+| login | VARCHAR | Уникальный логин |
+| password | VARCHAR | Пароль |
+| auth_token | VARCHAR | Токен |
+
+### files
+| Поле | Тип | Описание |
+|------|-----|----------|
+| id | BIGSERIAL | Первичный ключ |
+| filename | VARCHAR | Имя файла |
+| size | BIGINT | Размер в байтах |
+| file_path | VARCHAR | Путь к файлу |
+| user_id | BIGINT | Владелец |
+| upload_date | TIMESTAMP | Дата загрузки |
+
+## Автор
+
+Minoritykilla – дипломный проект «Облачное хранилище»
