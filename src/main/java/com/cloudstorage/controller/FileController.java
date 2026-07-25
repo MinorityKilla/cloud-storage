@@ -106,7 +106,18 @@ public class FileController {
             @RequestBody Map<String, String> body) {
         try {
             User user = authService.getUserByToken(token);
+            // Извлекаем новое имя из возможных полей
             String newFilename = body.get("name");
+            if (newFilename == null || newFilename.isEmpty()) {
+                newFilename = body.get("filename");
+            }
+            if (newFilename == null || newFilename.isEmpty()) {
+                newFilename = body.get("newName");
+            }
+            if (newFilename == null || newFilename.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("message", "New filename not provided", "id", 400));
+            }
             fileService.renameFile(user, filename, newFilename);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
